@@ -14,6 +14,10 @@ from .protocol_data.msi_keymaps import AVAILABLE_MSI_KEYMAPS
 from .protocol_data.presets_index import PRESETS_FILES
 
 
+class UnknownModelError(Exception):
+    pass
+
+
 class MSIKeyboard:
     presets_files = PRESETS_FILES
     available_msi_keymaps = AVAILABLE_MSI_KEYMAPS
@@ -127,3 +131,13 @@ class MSIKeyboard:
                 "If you have just installed this tool, reboot your computer for the udev rule to take effect.\n"
                 "- The USB device is not a HID device."
             )
+
+    @classmethod
+    def parse_model(cls, model_arg):
+        model_arg_nocase = model_arg.upper()
+        for msi_models, _ in cls.available_msi_keymaps:
+            for model in msi_models:
+                if model == model_arg_nocase:
+                    return model
+
+        raise UnknownModelError(model_arg)

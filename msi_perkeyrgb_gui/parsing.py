@@ -1,12 +1,6 @@
 import re
 from typing import Tuple
 
-from .protocol_data.msi_keymaps import AVAILABLE_MSI_KEYMAPS
-
-
-class UnknownModelError(Exception):
-    pass
-
 
 class UnknownIdError(Exception):
     pass
@@ -14,16 +8,6 @@ class UnknownIdError(Exception):
 
 class UnknownPresetError(Exception):
     pass
-
-
-def parse_model(model_arg):
-    model_arg_nocase = model_arg.upper()
-    for msi_models, _ in AVAILABLE_MSI_KEYMAPS:
-        for model in msi_models:
-            if model == model_arg_nocase:
-                return model
-
-    raise UnknownModelError(model_arg)
 
 
 def parse_usb_id(id_arg) -> Tuple[int, int]:

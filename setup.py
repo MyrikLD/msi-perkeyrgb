@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 from os.path import dirname, join
 from setuptools import setup, find_packages
-
+from msi_perkeyrgb_gui.main import __version__
 
 setup(
     name="msi-perkeyrgb-gui",
-    version="0.1",
+    version=__version__,
     description="Configuration tool GUI for per-key RGB keyboards on MSI laptops.",
     long_description=open(join(dirname(__file__), "README.md")).read(),
     url="https://github.com/MyrikLD/msi-perkeyrgb-gui",

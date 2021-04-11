@@ -7,25 +7,22 @@ import sys
 
 import gi
 
-import gui_handlers
 from .config import load_steady, ConfigError
-from .msikeyboard import MSIKeyboard
+from .gui_handlers import SetupHandler, ConfigHandler
+from .msikeyboard import MSIKeyboard, UnknownModelError
 from .parsing import (
-    parse_model,
     parse_usb_id,
     parse_preset,
-    UnknownModelError,
     UnknownIdError,
     UnknownPresetError,
 )
-from .protocol_data.msi_keymaps import AVAILABLE_MSI_KEYMAPS
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-VERSION = "2.1"
+__version__ = "3.0"
 DEFAULT_ID = "1038:1122"
-DEFAULT_MODEL = "GE63"  # Default laptop model if nothing specified
+DEFAULT_MODEL = "GP75"  # Default laptop model if nothing specified
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
@@ -40,9 +37,9 @@ def run_gui(model, colors_filename, usb_id, setup=False):
     color_selector = builder.get_object("color_selector")
 
     if setup:
-        h = gui_handlers.SetupHandler(model, kb_image)
+        h = SetupHandler(model, kb_image)
     else:
-        h = gui_handlers.ConfigHandler(
+        h = ConfigHandler(
             model,
             kb_image,
             color_selector,
@@ -53,7 +50,7 @@ def run_gui(model, colors_filename, usb_id, setup=False):
 
     window = builder.get_object("GtkWindow")
     window.show_all()
-    window.set_title(f"{model} Keyboard")
+    window.set_title(f"{model} Keyboard {__version__}")
 
     Gtk.main()
 
@@ -115,12 +112,12 @@ def main():
     args = parser.parse_args()
 
     if args.version:
-        print("Version : %s" % VERSION)
+        print("Version: %s" % __version__)
         sys.exit(1)
 
     if args.list_models:
         print("Available laptop models are :")
-        for msi_models, _ in AVAILABLE_MSI_KEYMAPS:
+        for msi_models, _ in MSIKeyboard.available_msi_keymaps:
             for model in msi_models:
                 print(model)
         print(
@@ -136,7 +133,7 @@ def main():
         msi_model = DEFAULT_MODEL
     else:
         try:
-            msi_model = parse_model(args.model)
+            msi_model = MSIKeyboard.parse_model(args.model)
         except UnknownModelError:
             print("Unknown MSI model : %s" % args.model)
             sys.exit(1)

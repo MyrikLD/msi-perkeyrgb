@@ -3,9 +3,9 @@ from collections import Counter
 from itertools import groupby
 from json import JSONDecodeError
 from logging import getLogger
-from typing import List
+from typing import List, Optional
 
-from key import Key
+from .key import Key
 
 log = getLogger(__name__)
 
@@ -121,13 +121,13 @@ class Keyboard:
         with open(filename, "w") as f:
             f.writelines([i + "\n" for i in lines])
 
-    def get_xy(self, x: int, y: int) -> Key:
+    def get_xy(self, x: int, y: int) -> Optional[Key]:
         for key in self:
             if key.clicked(x, y):
                 return key
-        log.debug(f"Unknown keycode: (%i,%i)", x, y)
+        log.debug(f"Unknown key position: (%i,%i)", x, y)
 
-    def get_keycode(self, keycode: int) -> Key:
+    def get_keycode(self, keycode: int) -> Optional[Key]:
         for i in self:
             if i.keycode == keycode:
                 return i
