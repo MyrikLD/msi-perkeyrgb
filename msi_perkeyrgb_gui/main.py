@@ -116,8 +116,9 @@ def main():
 
     if args.version:
         print("Version : %s" % VERSION)
+        sys.exit(1)
 
-    elif args.list_models:
+    if args.list_models:
         print("Available laptop models are :")
         for msi_models, _ in AVAILABLE_MSI_KEYMAPS:
             for model in msi_models:
@@ -127,98 +128,84 @@ def main():
             "(with a keyboard layout as similar as possible). "
             "This tool will only work with per-key RGB models."
         )
+        sys.exit(1)
 
+    # Parse laptop model
+    if not args.model:
+        print("No laptop model specified, using %s as default." % DEFAULT_MODEL)
+        msi_model = DEFAULT_MODEL
     else:
-        # Parse laptop model
-        if not args.model:
-            print("No laptop model specified, using %s as default." % DEFAULT_MODEL)
-            msi_model = DEFAULT_MODEL
+        try:
+            msi_model = parse_model(args.model)
+        except UnknownModelError:
+            print("Unknown MSI model : %s" % args.model)
+            sys.exit(1)
+
+    # Parse USB vendor/product ID
+    if not args.id:
+        usb_id = parse_usb_id(DEFAULT_ID)
+    else:
+        try:
+            usb_id = parse_usb_id(args.id)
+        except UnknownIdError:
+            print("Unknown vendor/product ID : %s" % args.id)
+            sys.exit(1)
+
+    # Loading presets
+    msi_presets = MSIKeyboard.get_model_presets(msi_model)
+
+    if args.list_presets:
+        if msi_presets == {}:
+            print("No presets available for %s." % msi_model)
         else:
-            try:
-                msi_model = parse_model(args.model)
-            except UnknownModelError:
-                print("Unknown MSI model : %s" % args.model)
-                sys.exit(1)
+            print("Available presets for %s:" % msi_model)
+            for preset in msi_presets.keys():
+                print("\t- %s" % preset)
+        sys.exit(1)
 
-        # Parse USB vendor/product ID
-        if not args.id:
-            usb_id = parse_usb_id(DEFAULT_ID)
-        else:
-            try:
-                usb_id = parse_usb_id(args.id)
-            except UnknownIdError:
-                print("Unknown vendor/product ID : %s" % args.id)
-                sys.exit(1)
+    # Loading keymap
+    msi_keymap = MSIKeyboard.get_model_keymap(msi_model)
 
-        # Loading presets
-        msi_presets = MSIKeyboard.get_model_presets(msi_model)
+    # Loading keyboard
+    kb = MSIKeyboard.get(usb_id, msi_keymap, msi_presets)
+    if not kb:
+        sys.exit(1)
 
-        if args.list_presets:
-            if msi_presets == {}:
-                print("No presets available for %s." % msi_model)
-            else:
-                print("Available presets for %s:" % msi_model)
-                for preset in msi_presets.keys():
-                    print("\t- %s" % preset)
+    # If user has requested disabling
+    if args.disable:
+        kb.set_color_all([0, 0, 0])
+        kb.refresh()
+        sys.exit(1)
 
-        else:
-            # Loading keymap
-            msi_keymap = MSIKeyboard.get_model_keymap(msi_model)
+    # If user has requested a preset
+    elif args.preset:
+        try:
+            preset = parse_preset(args.preset, msi_presets)
+        except UnknownPresetError:
+            print(
+                f"Preset {args.preset} not found for model {msi_model}. "
+                f"Use --list-presets for available options"
+            )
+            sys.exit(1)
 
-            # Loading keyboard
-            kb = MSIKeyboard.get(usb_id, msi_keymap, msi_presets)
-            if not kb:
-                sys.exit(1)
+        kb.set_preset(preset)
+        kb.refresh()
+        sys.exit(1)
 
-            # If user has requested disabling
-            if args.disable:
-                kb.set_color_all([0, 0, 0])
-                kb.refresh()
-                return
+    # If user has requested to display a steady color
+    elif args.steady:
+        try:
+            colors_map, warnings = load_steady(args.steady, msi_keymap)
+        except ConfigError as e:
+            print("Error preparing steady color : %s" % str(e))
+            sys.exit(1)
+        kb.set_colors(colors_map)
+        kb.refresh()
+        sys.exit(1)
 
-            # If user has requested a preset
-            elif args.preset:
-                try:
-                    preset = parse_preset(args.preset, msi_presets)
-                except UnknownPresetError:
-                    print(
-                        "Preset %s not found for model %s. Use --list-presets for available options"
-                        % (args.preset, msi_model)
-                    )
-                    sys.exit(1)
-
-                kb.set_preset(preset)
-                kb.refresh()
-                return
-
-            # If user has requested to load a config file
-            # elif args.config:
-            #     try:
-            #         colors_map, warnings = load_config(args.config, msi_keymap)
-            #     except ConfigError as e:
-            #         print("Error reading config file: %s" % str(e))
-            #         sys.exit(1)
-            #
-            #     for w in warnings:
-            #         print("Warning :", w)
-            #
-            #     kb.set_colors(colors_map)
-            #     kb.refresh()
-
-            # If user has requested to display a steady color
-            elif args.steady:
-                try:
-                    colors_map, warnings = load_steady(args.steady, msi_keymap)
-                except ConfigError as e:
-                    print("Error preparing steady color : %s" % str(e))
-                    sys.exit(1)
-                kb.set_colors(colors_map)
-                kb.refresh()
-                return
-
-            # If user has not requested anything
-            else:
-                run_gui(msi_model, args.config, usb_id, args.setup)
+    # If user has not requested anything
+    else:
+        run_gui(msi_model, args.config, usb_id, args.setup)
 
 
 if __name__ == "__main__":
