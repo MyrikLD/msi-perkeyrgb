@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import logging
 import os
 import sys
 
@@ -25,6 +26,10 @@ from gi.repository import Gtk
 VERSION = "2.1"
 DEFAULT_ID = "1038:1122"
 DEFAULT_MODEL = "GE63"  # Default laptop model if nothing specified
+
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
+log = logging.getLogger(__name__)
 
 
 def run_gui(model, colors_filename, usb_id, setup=False):

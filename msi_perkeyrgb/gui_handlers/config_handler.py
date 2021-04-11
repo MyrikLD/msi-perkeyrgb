@@ -73,7 +73,9 @@ class ConfigHandler(BaseHandler):
 
     def image_press(self, obj, button):
         key = self.keyboard.get_xy(button.x, button.y)
-        log.info(key)
+        if not key:
+            return
+        log.info("Choose key %r: #%s", key.name, key.color.upper())
         self.current_key = key
         color = key.color
 
@@ -99,10 +101,9 @@ class ConfigHandler(BaseHandler):
                 log.info(f"Load colors from: {self.colors_filename}")
                 self.keyboard.load_colors(self.colors_filename)
                 self.image.queue_draw()
-            print(keycode)
-        else:
-            key = self.keyboard.get_keycode(keycode)
-            log.info(key or keycode)
+        # else:
+        #     key = self.keyboard.get_keycode(keycode)
+        #     log.info("Press: %s", key.name if key else keycode)
 
     def color_changed(self, color_selection):
         color = color_selection.get_current_rgba()
@@ -112,7 +113,8 @@ class ConfigHandler(BaseHandler):
             int(color.blue * 255),
         ]
         text = "".join("%0.2X" % i for i in rgb).lower()
-        log.info(f"#{text}")
-        if self.current_key:
+
+        if self.current_key and self.current_key.color != text:
+            log.info(f"New color for %r: #%s", self.current_key.name, text.upper())
             self.current_key.color = text
             self.image.queue_draw()

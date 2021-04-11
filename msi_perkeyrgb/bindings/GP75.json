@@ -821,7 +821,7 @@
       ]
     ],
     "keycode": 63,
-    "name": "numpad_*",
+    "name": "numpad_multiply",
     "color": "000000"
   },
   {
@@ -1241,7 +1241,7 @@
       ]
     ],
     "keycode": 91,
-    "name": "numpad_.",
+    "name": "numpad_dot",
     "color": "000000"
   },
   {
@@ -1331,7 +1331,7 @@
       ]
     ],
     "keycode": 106,
-    "name": "numpad_/",
+    "name": "numpad_divide",
     "color": "000000"
   },
   {
