@@ -12,6 +12,18 @@ class BaseHandler:
             os.path.dirname(__file__), "..", "bindings", f"{model}.json"
         )
 
+    def color_changed(self, color_selection):
+        pass
+
+    def image_press(self, obj, button):
+        pass
+
+    def image_release(self, obj, button):
+        pass
+
+    def key_press(self, obj, button):
+        pass
+
     @staticmethod
     def exit(event):
         sys.exit(1)

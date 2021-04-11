@@ -63,10 +63,3 @@ class SetupHandler(BaseHandler):
                 f,
                 indent=2,
             )
-
-    def color_changed(self, color_selection):
-        pass
-
-    @staticmethod
-    def exit(event):
-        exit(1)

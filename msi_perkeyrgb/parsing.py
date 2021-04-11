@@ -17,7 +17,6 @@ class UnknownPresetError(Exception):
 
 
 def parse_model(model_arg):
-
     model_arg_nocase = model_arg.upper()
     for msi_models, _ in AVAILABLE_MSI_KEYMAPS:
         for model in msi_models:
@@ -38,7 +37,6 @@ def parse_usb_id(id_arg) -> Tuple[int, int]:
 
 
 def parse_preset(preset_arg, msi_presets):
-
     if preset_arg in msi_presets.keys():
         return preset_arg
     else:

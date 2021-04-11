@@ -1,16 +1,12 @@
 import logging
+import os
 import sys
 
 from gi.repository import Gdk
 
 from keyboard import Keyboard
 from msi_perkeyrgb.config import load_config, ConfigError
-from msi_perkeyrgb.hidapi_wrapping import (
-    HIDNotFoundError,
-    HIDOpenError,
-    HIDLibraryError,
-)
-from msi_perkeyrgb.msi_keyboard import MSI_Keyboard
+from msi_perkeyrgb.msikeyboard import MSIKeyboard
 from msi_perkeyrgb.parsing import parse_usb_id, UnknownIdError
 from .base import BaseHandler
 
@@ -19,8 +15,8 @@ GDK_CONTROL_MASK = 4
 
 
 def update_kb(model, usb_id, config):
-    msi_presets = MSI_Keyboard.get_model_presets(model)
-    msi_keymap = MSI_Keyboard.get_model_keymap(model)
+    msi_presets = MSIKeyboard.get_model_presets(model)
+    msi_keymap = MSIKeyboard.get_model_keymap(model)
 
     try:
         parsed_usb_id = parse_usb_id(usb_id)
@@ -28,24 +24,8 @@ def update_kb(model, usb_id, config):
         log.error(f"Unknown vendor/product ID: %s", usb_id)
         sys.exit(1)
 
-    try:
-        kb = MSI_Keyboard(parsed_usb_id, msi_keymap, msi_presets)
-    except HIDLibraryError as e:
-        log.error(
-            "Cannot open HIDAPI library: %s. "
-            'Make sure you have installed libhidapi on your system, then try running "sudo ldconfig" to regenerate library cache.',
-            e,
-        )
-        sys.exit(1)
-    except HIDNotFoundError:
-        log.error(f"No USB device with ID {usb_id} found.")
-        sys.exit(1)
-    except HIDOpenError:
-        log.error(
-            "Cannot open keyboard. Possible causes:\n"
-            "- You don't have permissions to open the HID device. Run this program as root, or give yourself read/write permissions to the corresponding /dev/hidraw*. If you have just installed this tool, reboot your computer for the udev rule to take effect.\n"
-            "- The USB device is not a HID device."
-        )
+    kb = MSIKeyboard.get(parsed_usb_id, msi_keymap, msi_presets)
+    if not kb:
         sys.exit(1)
 
     try:
@@ -76,6 +56,8 @@ class ConfigHandler(BaseHandler):
 
         self.image.set_from_file(self.image_path)
         self.keyboard.load_colors(self.colors_filename)
+        if not os.path.isfile(self.colors_filename):
+            self.keyboard.save_colors(self.colors_filename)
 
     def expose(self, area, context):
         for key in self.keyboard:
@@ -103,9 +85,6 @@ class ConfigHandler(BaseHandler):
                 1,
             )
         )
-
-    def image_release(self, obj, button):
-        pass
 
     def key_press(self, obj, button):
         keycode = button.hardware_keycode
@@ -137,7 +116,3 @@ class ConfigHandler(BaseHandler):
         if self.current_key:
             self.current_key.color = text
             self.image.queue_draw()
-
-    @staticmethod
-    def exit(event):
-        sys.exit(1)

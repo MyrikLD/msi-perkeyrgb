@@ -8,8 +8,7 @@ import gi
 
 import gui_handlers
 from .config import load_steady, ConfigError
-from .hidapi_wrapping import HIDLibraryError, HIDNotFoundError, HIDOpenError
-from .msi_keyboard import MSI_Keyboard
+from .msikeyboard import MSIKeyboard
 from .parsing import (
     parse_model,
     parse_usb_id,
@@ -99,6 +98,7 @@ def main():
     parser.add_argument(
         "--list-models", action="store_true", help="List available laptop models."
     )
+    parser.add_argument("--setup", action="store_true", help="Open app in setup mode.")
     parser.add_argument(
         "-s",
         "--steady",
@@ -118,7 +118,9 @@ def main():
             for model in msi_models:
                 print(model)
         print(
-            "\nIf your laptop is not in this list, use the closest one (with a keyboard layout as similar as possible). This tool will only work with per-key RGB models."
+            "\nIf your laptop is not in this list, use the closest one "
+            "(with a keyboard layout as similar as possible). "
+            "This tool will only work with per-key RGB models."
         )
 
     else:
@@ -144,7 +146,7 @@ def main():
                 sys.exit(1)
 
         # Loading presets
-        msi_presets = MSI_Keyboard.get_model_presets(msi_model)
+        msi_presets = MSIKeyboard.get_model_presets(msi_model)
 
         if args.list_presets:
             if msi_presets == {}:
@@ -155,48 +157,19 @@ def main():
                     print("\t- %s" % preset)
 
         else:
-
             # Loading keymap
-            msi_keymap = MSI_Keyboard.get_model_keymap(msi_model)
+            msi_keymap = MSIKeyboard.get_model_keymap(msi_model)
 
             # Loading keyboard
-            try:
-                kb = MSI_Keyboard(usb_id, msi_keymap, msi_presets)
-            except HIDLibraryError as e:
-                print(
-                    "Cannot open HIDAPI library : %s. "
-                    "Make sure you have installed libhidapi on your system, "
-                    'then try running "sudo ldconfig" to regenerate library cache.'
-                    % str(e)
-                )
-                sys.exit(1)
-            except HIDNotFoundError:
-                if not args.id:
-                    print(
-                        "No MSI keyboards with a known product/vendor IDs were found. "
-                        "However, if you think your keyboard should work with this program, "
-                        'you can try overriding the ID by adding the option "--id VENDOR_ID:PRODUCT_ID". '
-                        "In that case you will also need to give yourself proper read/write permissions "
-                        "to the corresponding /dev/hidraw* device."
-                    )
-                else:
-                    print("No USB device with ID %s found." % args.id)
-                sys.exit(1)
-            except HIDOpenError:
-                print(
-                    "Cannot open keyboard. Possible causes :\n"
-                    "- You don't have permissions to open the HID device. "
-                    "Run this program as root, or give yourself read/write permissions "
-                    "to the corresponding /dev/hidraw*. "
-                    "If you have just installed this tool, reboot your computer for the udev rule to take effect.\n"
-                    "- The USB device is not a HID device."
-                )
+            kb = MSIKeyboard.get(usb_id, msi_keymap, msi_presets)
+            if not kb:
                 sys.exit(1)
 
             # If user has requested disabling
             if args.disable:
                 kb.set_color_all([0, 0, 0])
                 kb.refresh()
+                return
 
             # If user has requested a preset
             elif args.preset:
@@ -211,6 +184,7 @@ def main():
 
                 kb.set_preset(preset)
                 kb.refresh()
+                return
 
             # If user has requested to load a config file
             # elif args.config:
@@ -235,10 +209,11 @@ def main():
                     sys.exit(1)
                 kb.set_colors(colors_map)
                 kb.refresh()
+                return
 
             # If user has not requested anything
             else:
-                run_gui(msi_model, "config.msic", usb_id)
+                run_gui(msi_model, args.config, usb_id, args.setup)
 
 
 if __name__ == "__main__":
