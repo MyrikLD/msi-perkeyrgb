@@ -3,18 +3,19 @@ from typing import Optional
 from gi.repository import Gtk
 
 
-class OpenFileDialog(Gtk.FileChooserDialog):
+class SaveFileDialog(Gtk.FileChooserDialog):
     def __init__(self, parent):
         Gtk.Dialog.__init__(
             self,
             title="Choose config file",
             transient_for=parent,
             flags=0,
-            action=Gtk.FileChooserAction.OPEN,
+            action=Gtk.FileChooserAction.SAVE,
         )
         self.add_buttons(
             Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OK, Gtk.ResponseType.OK
         )
+        self.set_current_name("config.msic")
         self.set_local_only(True)
         self.show_all()
 

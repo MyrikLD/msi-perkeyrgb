@@ -6,6 +6,7 @@ from gi.repository import Gdk
 
 from .base import BaseHandler
 from .open_file_dialog import OpenFileDialog
+from .save_file_dialog import SaveFileDialog
 from ..config import load_config, ConfigError
 from ..keyboard import Keyboard
 from ..msikeyboard import MSIKeyboard
@@ -49,7 +50,7 @@ class ConfigHandler(BaseHandler):
         super().__init__(model)
         self.image = image
         self.color_selector = color_selector
-        self.colors_filename = colors_filename
+        self.colors_filename = os.path.abspath(colors_filename)
         self.usb_id = usb_id
 
         self.image.connect("draw", self.expose)
@@ -95,22 +96,15 @@ class ConfigHandler(BaseHandler):
         shift = bool(int(flag) & GDK_CONTROL_MASK)
         if shift:
             key = self.keyboard.get_keycode(keycode)
+            window = self.color_selector.get_parent()
             if keycode == 39 or key.name == "s":
-                log.info(f"Save colors to: {self.colors_filename}")
-                self.keyboard.save_colors(self.colors_filename)
-                update_kb(self.model, self.usb_id, self.colors_filename)
+                self.config_save(window)
             elif keycode == 52 or key.name == "x":
                 log.info(f"Load colors from: {self.colors_filename}")
                 self.keyboard.load_colors(self.colors_filename)
                 self.image.queue_draw()
             elif keycode == 32 or key.name == "o":
-                file_path = OpenFileDialog.open(self.color_selector.get_parent())
-                if file_path:
-                    self.colors_filename = file_path
-
-                    self.keyboard.load_colors(self.colors_filename)
-                    self.image.queue_draw()
-                    log.info(f"Config file opened: {self.colors_filename}")
+                self.config_open(window)
             else:
                 key = self.keyboard.get_keycode(keycode)
                 if key:
@@ -118,6 +112,27 @@ class ConfigHandler(BaseHandler):
         # else:
         #     key = self.keyboard.get_keycode(keycode)
         #     log.info("Press: %s", key.name if key else keycode)
+
+    def config_save(self, obj):
+        self.keyboard.save_colors(self.colors_filename)
+        update_kb(self.model, self.usb_id, self.colors_filename)
+        log.info(f"Config saved to: {self.colors_filename}")
+
+    def config_save_as(self, obj):
+        file_path = SaveFileDialog.open(obj)
+        if file_path:
+            self.colors_filename = file_path
+            self.keyboard.save_colors(self.colors_filename)
+            log.info(f"Config saved to: {self.colors_filename}")
+
+    def config_open(self, obj):
+        file_path = OpenFileDialog.open(obj)
+        if file_path:
+            self.colors_filename = file_path
+
+            self.keyboard.load_colors(self.colors_filename)
+            self.image.queue_draw()
+            log.info(f"Config file opened: {self.colors_filename}")
 
     def color_changed(self, color_selection):
         color = color_selection.get_current_rgba()
