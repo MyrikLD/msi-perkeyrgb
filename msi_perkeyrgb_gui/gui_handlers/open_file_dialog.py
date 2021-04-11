@@ -5,17 +5,11 @@ from gi.repository import Gtk
 
 class OpenFileDialog(Gtk.FileChooserDialog):
     def __init__(self, parent):
-        Gtk.Dialog.__init__(self, title="My Dialog", transient_for=parent, flags=0)
+        Gtk.Dialog.__init__(self, title="Choose config file", transient_for=parent, flags=0)
         self.add_buttons(
             Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OK, Gtk.ResponseType.OK
         )
-
-        self.set_default_size(150, 100)
-
-        label = Gtk.Label(label="This is a dialog to display additional information")
-
-        box = self.get_content_area()
-        box.add(label)
+        self.set_local_only(True)
         self.show_all()
 
     @classmethod

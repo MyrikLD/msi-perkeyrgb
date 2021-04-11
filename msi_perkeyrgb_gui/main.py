@@ -204,6 +204,15 @@ def main():
 
     # If user has not requested anything
     else:
+        if not os.path.isfile(args.config):
+            with open(args.config, "w") as i:
+                with open(
+                    os.path.join(os.path.dirname(__file__), "configs", "default.msic")
+                ) as o:
+                    print(
+                        f"Config file {args.config} not found, new created from default"
+                    )
+                    i.write(o.read())
         run_gui(msi_model, args.config, usb_id, args.setup)
 
 

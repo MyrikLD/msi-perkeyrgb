@@ -104,13 +104,13 @@ class ConfigHandler(BaseHandler):
                 self.keyboard.load_colors(self.colors_filename)
                 self.image.queue_draw()
             elif keycode == 32 or key.name == "o":
-                self.colors_filename = OpenFileDialog.open(
-                    self.color_selector.get_parent()
-                )
+                file_path = OpenFileDialog.open(self.color_selector.get_parent())
+                if file_path:
+                    self.colors_filename = file_path
 
-                self.keyboard.load_colors(self.colors_filename)
-                self.image.queue_draw()
-                log.info(f"Config file opened: {self.colors_filename}")
+                    self.keyboard.load_colors(self.colors_filename)
+                    self.image.queue_draw()
+                    log.info(f"Config file opened: {self.colors_filename}")
             else:
                 key = self.keyboard.get_keycode(keycode)
                 if key:
