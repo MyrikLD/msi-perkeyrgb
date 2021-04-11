@@ -1,30 +1,116 @@
 #!/usr/bin/env python
 
-import sys
 import argparse
+import logging
+import os
+import sys
+
+import gi
+
+import gui_handlers
+from .config import load_steady, ConfigError
+from .msikeyboard import MSIKeyboard
+from .parsing import (
+    parse_model,
+    parse_usb_id,
+    parse_preset,
+    UnknownModelError,
+    UnknownIdError,
+    UnknownPresetError,
+)
 from .protocol_data.msi_keymaps import AVAILABLE_MSI_KEYMAPS
-from .config import load_config, load_steady, ConfigError
-from .parsing import parse_model, parse_usb_id, parse_preset, UnknownModelError, UnknownIdError, UnknownPresetError
-from .msi_keyboard import MSI_Keyboard
-from .hidapi_wrapping import HIDLibraryError, HIDNotFoundError, HIDOpenError
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 
 VERSION = "2.1"
 DEFAULT_ID = "1038:1122"
 DEFAULT_MODEL = "GE63"  # Default laptop model if nothing specified
 
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
+log = logging.getLogger(__name__)
+
+
+def run_gui(model, colors_filename, usb_id, setup=False):
+    builder = Gtk.Builder()
+
+    builder.add_from_file(os.path.join(os.path.dirname(__file__), "ui.glade"))
+    kb_image = builder.get_object("kb_image")
+    color_selector = builder.get_object("color_selector")
+
+    if setup:
+        h = gui_handlers.SetupHandler(model, kb_image)
+    else:
+        h = gui_handlers.ConfigHandler(
+            model,
+            kb_image,
+            color_selector,
+            colors_filename,
+            usb_id,
+        )
+    builder.connect_signals(h)
+
+    window = builder.get_object("GtkWindow")
+    window.show_all()
+    window.set_title(f"{model} Keyboard")
+
+    Gtk.main()
+
 
 def main():
-    parser = argparse.ArgumentParser(description='Tool to control per-key RGB keyboard backlighting on MSI laptops. https://github.com/Askannz/msi-perkeyrgb')
-    parser.add_argument('-v', '--version', action='store_true', help='Prints version and exits.')
-    parser.add_argument('-c', '--config', action='store', metavar='FILEPATH', help='Loads the configuration file located at FILEPATH. Refer to the README for syntax. If set to "-", '
-                                                                                    'the configuration file is read from the standard input (stdin) instead.')
-    parser.add_argument('-d', '--disable', action='store_true', help='Disable RGB lighting.')
-    parser.add_argument('--id', action='store', metavar='VENDOR_ID:PRODUCT_ID', help='This argument allows you to specify the vendor/product id of your keyboard. You should not have to use this unless opening the keyboard fails with the default value. IDs are in hexadecimal format (example :  1038:1122)')
-    parser.add_argument('--list-presets', action='store_true', help='List available presets for the given laptop model.')
-    parser.add_argument('-p', '--preset', action='store', help='Use vendor preset (see --list-presets).')
-    parser.add_argument('-m', '--model', action='store', help='Set laptop model (see --list-models). If not specified, will use %s as default.' % DEFAULT_MODEL)
-    parser.add_argument('--list-models', action='store_true', help='List available laptop models.')
-    parser.add_argument('-s', '--steady', action='store', metavar='HEXCOLOR', help='Set all of the keyboard to a steady html color. ex. 00ff00 for green')
+    parser = argparse.ArgumentParser(
+        description="Tool to control per-key RGB keyboard backlighting on MSI laptops. https://github.com/Askannz/msi-perkeyrgb"
+    )
+    parser.add_argument(
+        "-v", "--version", action="store_true", help="Prints version and exits."
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        action="store",
+        metavar="FILEPATH",
+        help='Loads the configuration file located at FILEPATH. Refer to the README for syntax. If set to "-", '
+        "the configuration file is read from the standard input (stdin) instead.",
+        default="config.msic",
+    )
+    parser.add_argument(
+        "-d", "--disable", action="store_true", help="Disable RGB lighting."
+    )
+    parser.add_argument(
+        "--id",
+        action="store",
+        metavar="VENDOR_ID:PRODUCT_ID",
+        help="This argument allows you to specify the vendor/product id of your keyboard. "
+        "You should not have to use this unless opening the keyboard fails with the default value. "
+        "IDs are in hexadecimal format (example :  1038:1122)",
+    )
+    parser.add_argument(
+        "--list-presets",
+        action="store_true",
+        help="List available presets for the given laptop model.",
+    )
+    parser.add_argument(
+        "-p", "--preset", action="store", help="Use vendor preset (see --list-presets)."
+    )
+    parser.add_argument(
+        "-m",
+        "--model",
+        action="store",
+        help="Set laptop model (see --list-models). If not specified, will use %s as default."
+        % DEFAULT_MODEL,
+    )
+    parser.add_argument(
+        "--list-models", action="store_true", help="List available laptop models."
+    )
+    parser.add_argument("--setup", action="store_true", help="Open app in setup mode.")
+    parser.add_argument(
+        "-s",
+        "--steady",
+        action="store",
+        metavar="HEXCOLOR",
+        help="Set all of the keyboard to a steady html color. ex. 00ff00 for green",
+    )
 
     args = parser.parse_args()
 
@@ -36,10 +122,13 @@ def main():
         for msi_models, _ in AVAILABLE_MSI_KEYMAPS:
             for model in msi_models:
                 print(model)
-        print("\nIf your laptop is not in this list, use the closest one (with a keyboard layout as similar as possible). This tool will only work with per-key RGB models.")
+        print(
+            "\nIf your laptop is not in this list, use the closest one "
+            "(with a keyboard layout as similar as possible). "
+            "This tool will only work with per-key RGB models."
+        )
 
     else:
-
         # Parse laptop model
         if not args.model:
             print("No laptop model specified, using %s as default." % DEFAULT_MODEL)
@@ -62,7 +151,7 @@ def main():
                 sys.exit(1)
 
         # Loading presets
-        msi_presets = MSI_Keyboard.get_model_presets(msi_model)
+        msi_presets = MSIKeyboard.get_model_presets(msi_model)
 
         if args.list_presets:
             if msi_presets == {}:
@@ -73,55 +162,48 @@ def main():
                     print("\t- %s" % preset)
 
         else:
-
             # Loading keymap
-            msi_keymap = MSI_Keyboard.get_model_keymap(msi_model)
+            msi_keymap = MSIKeyboard.get_model_keymap(msi_model)
 
             # Loading keyboard
-            try:
-                kb = MSI_Keyboard(usb_id, msi_keymap, msi_presets)
-            except HIDLibraryError as e:
-                print("Cannot open HIDAPI library : %s. Make sure you have installed libhidapi on your system, then try running \"sudo ldconfig\" to regenerate library cache." % str(e))
-                sys.exit(1)
-            except HIDNotFoundError:
-                if not args.id:
-                    print("No MSI keyboards with a known product/vendor IDs were found. However, if you think your keyboard should work with this program, you can try overriding the ID by adding the option \"--id VENDOR_ID:PRODUCT_ID\". In that case you will also need to give yourself proper read/write permissions to the corresponding /dev/hidraw* device.")
-                else:
-                    print("No USB device with ID %s found." % args.id)
-                sys.exit(1)
-            except HIDOpenError:
-                print("Cannot open keyboard. Possible causes :\n- You don't have permissions to open the HID device. Run this program as root, or give yourself read/write permissions to the corresponding /dev/hidraw*. If you have just installed this tool, reboot your computer for the udev rule to take effect.\n- The USB device is not a HID device.")
+            kb = MSIKeyboard.get(usb_id, msi_keymap, msi_presets)
+            if not kb:
                 sys.exit(1)
 
             # If user has requested disabling
             if args.disable:
                 kb.set_color_all([0, 0, 0])
                 kb.refresh()
+                return
 
             # If user has requested a preset
             elif args.preset:
                 try:
                     preset = parse_preset(args.preset, msi_presets)
                 except UnknownPresetError:
-                    print("Preset %s not found for model %s. Use --list-presets for available options" % (args.preset, msi_model))
+                    print(
+                        "Preset %s not found for model %s. Use --list-presets for available options"
+                        % (args.preset, msi_model)
+                    )
                     sys.exit(1)
 
                 kb.set_preset(preset)
                 kb.refresh()
+                return
 
             # If user has requested to load a config file
-            elif args.config:
-                try:
-                    colors_map, warnings = load_config(args.config, msi_keymap)
-                except ConfigError as e:
-                    print("Error reading config file : %s" % str(e))
-                    sys.exit(1)
-
-                for w in warnings:
-                    print("Warning :", w)
-
-                kb.set_colors(colors_map)
-                kb.refresh()
+            # elif args.config:
+            #     try:
+            #         colors_map, warnings = load_config(args.config, msi_keymap)
+            #     except ConfigError as e:
+            #         print("Error reading config file: %s" % str(e))
+            #         sys.exit(1)
+            #
+            #     for w in warnings:
+            #         print("Warning :", w)
+            #
+            #     kb.set_colors(colors_map)
+            #     kb.refresh()
 
             # If user has requested to display a steady color
             elif args.steady:
@@ -132,11 +214,12 @@ def main():
                     sys.exit(1)
                 kb.set_colors(colors_map)
                 kb.refresh()
+                return
 
             # If user has not requested anything
             else:
-                print("Nothing to do ! Please specify a preset, steady, or a config file.")
+                run_gui(msi_model, args.config, usb_id, args.setup)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

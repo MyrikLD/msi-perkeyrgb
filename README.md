@@ -5,16 +5,17 @@ This progam allows to control the SteelSeries per-key RGB keyboard backlighting 
 
 This is an unofficial tool, I am not affiliated to MSI nor SteelSeries in any way.
 
+This project forked from [msi-perkeyrgb](https://github.com/Askannz/msi-perkeyrgb/)
 
 Installation
 ----------
 
-If you are on Archlinux, use this AUR package : [msi-perkeyrgb](https://aur.archlinux.org/packages/msi-perkeyrgb/) (not up-to-date with the Git version yet)
+If you are on Archlinux, use this AUR package : [msi-perkeyrgb-rgb](https://aur.archlinux.org/packages/msi-perkeyrgb-gui/) (not up-to-date with the Git version yet)
 
 For Ubuntu or others :
 
 ```
-git clone https://github.com/Askannz/msi-perkeyrgb
+git clone https://github.com/MyrikLD/msi-perkeyrgb-gui
 cd msi-perkeyrgb/
 sudo python3 setup.py install
 sudo cp 99-msi-rgb.rules /etc/udev/rules.d/
@@ -92,7 +93,7 @@ Set from configuration file :
 ```
 msi-perkeyrgb --model <MSI model> -c <path to your configuration file>
 ```
-The configuration file allows you to set individual key configurations. It can have any extension. See the [dedicated wiki page](https://github.com/Askannz/msi-perkeyrgb/wiki/Configuration-file-guide) for its syntax and examples.
+The configuration file allows you to set individual key configurations. It can have any extension. See the [dedicated wiki page](https://github.com/MyrikLD/msi-perkeyrgb-gui/wiki/Configuration-file-guide) for its syntax and examples.
 
 
 How does it work, and credits
