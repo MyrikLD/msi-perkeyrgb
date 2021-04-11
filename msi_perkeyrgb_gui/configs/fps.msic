@@ -1,5 +1,5 @@
-all steady 000000
-29,30,45,52,53,54 steady 00ff00
-25,37,38,39,40,50 steady ff0000
-10,11,12,13,14,24,49 steady ffff00
-23,26,56,58,67,68,96 steady ffffff
+all steady black
+29,30,45,52,53,54 steady lime
+25,37,38,39,40,50 steady red
+10,11,12,13,14,24,49 steady yellow
+23,26,56,58,67,68,96 steady white

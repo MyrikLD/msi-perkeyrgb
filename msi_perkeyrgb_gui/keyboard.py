@@ -5,6 +5,8 @@ from json import JSONDecodeError
 from logging import getLogger
 from typing import List, Optional
 
+import webcolors
+
 from .key import Key
 from .parsing import parse_color
 
@@ -92,12 +94,19 @@ class Keyboard:
     def save_colors(self, filename: str):
         lines = []
 
+        def color_name(c):
+            try:
+                c = webcolors.hex_to_name(f"#{c}")
+            except ValueError:
+                pass
+            return c
+
         def eq(colors):
             return colors[0] if len(set(colors)) == 1 else None
 
         colors = Counter([i.color for i in self.keys])
         main_color = sorted(colors.items(), key=lambda x: x[1])[-1][0]
-        lines.append(f"all steady {main_color}")
+        lines.append(f"all steady {color_name(main_color)}")
 
         exclude = set()
 
@@ -105,7 +114,7 @@ class Keyboard:
             bulk = [key.color for key in (self.get_keycode(kc) for kc in v) if key]
             color = eq(bulk)
             if color and color != main_color:
-                lines.append(f"{k} steady {color}")
+                lines.append(f"{k} steady {color_name(color)}")
                 exclude.update(v)
 
         last_keys = [
@@ -117,7 +126,8 @@ class Keyboard:
         ):
             keycodes = sorted(i.keycode for i in keys)
             text = ",".join(str(i) for i in keycodes)
-            lines.append(f"{text} steady {color}")
+
+            lines.append(f"{text} steady {color_name(color)}")
 
         with open(filename, "w") as f:
             f.writelines([i + "\n" for i in lines])
