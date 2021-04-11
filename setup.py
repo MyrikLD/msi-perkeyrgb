@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from os.path import dirname, join
+
 from setuptools import setup, find_packages
+
 from msi_perkeyrgb_gui.main import __version__
 
 setup(
@@ -31,4 +33,5 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
     ],
+    install_requires=["webcolors", "pydantic"],
 )

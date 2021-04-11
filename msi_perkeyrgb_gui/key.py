@@ -1,7 +1,9 @@
 from typing import Tuple
 
 import gi
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+
+from .parsing import parse_color
 
 gi.require_version("Gtk", "3.0")
 
@@ -33,3 +35,7 @@ class Key(BaseModel):
             if self.box[0][1] < y < self.box[1][1]:
                 return True
         return False
+
+    @validator("color", pre=True)
+    def v_color(cls, v) -> str:
+        return parse_color(v)

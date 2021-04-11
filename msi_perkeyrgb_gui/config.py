@@ -1,5 +1,6 @@
 import re
-import sys
+
+from .parsing import parse_color
 
 ALIAS_ALL = "all"
 ALIASES = {
@@ -30,12 +31,8 @@ class UnknownModelError(Exception):
 
 def load_config(config_path, msi_keymap):
     try:
-        if config_path == "-":
-            f = sys.stdin
-        else:
-            f = open(config_path, "r")
-        config_map = parse_config(f, msi_keymap)
-        f.close()
+        with open(config_path) as f:
+            config_map = parse_config(f, msi_keymap)
     except FileNotFoundError as e:
         raise ConfigError("File %s does not exist" % config_path) from e
     except IOError as e:
@@ -46,8 +43,8 @@ def load_config(config_path, msi_keymap):
         raise e
     except Exception as e:
         raise ConfigError("Unknown error : %s" % str(e)) from e
-    else:
-        return config_map
+
+    return config_map
 
 
 def load_steady(color, msi_keymap):
@@ -57,7 +54,7 @@ def load_steady(color, msi_keymap):
 
     try:
         keycodes = parse_keycodes(msi_keymap, ALIAS_ALL)
-        color = parse_color(color)
+        color = parse_config_color(color)
     except LineParseError as e:
         raise ConfigParseError("Color parse error %s" % str(e)) from e
     else:
@@ -67,7 +64,6 @@ def load_steady(color, msi_keymap):
 
 
 def parse_config(f, msi_keymap):
-
     colors_map = {}
     warnings = []
 
@@ -91,7 +87,7 @@ def parse_config(f, msi_keymap):
             continue
         elif len(parameters) > 3:
             raise ConfigParseError(
-                "line %d : Invalid number of parameters (expected 3, got %d)"
+                "line %d: Invalid number of parameters (expected 3, got %d)"
                 % (i + 1, len(parameters))
             )
         else:
@@ -99,7 +95,7 @@ def parse_config(f, msi_keymap):
             try:
                 keycodes = parse_keycodes(msi_keymap, parameters[0])
                 parse_mode(parameters[1])
-                color = parse_color(parameters[2])
+                color = parse_config_color(parameters[2])
             except LineParseError as e:
                 raise ConfigParseError("line %d : %s" % (i + 1, str(e))) from e
             else:
@@ -152,12 +148,9 @@ def parse_mode(mode_parameter):
         raise LineParseError("Unknown mode %s" % mode_parameter)
 
 
-def parse_color(color_parameter):
-    if re.fullmatch("^[0-9a-f]{6}$", color_parameter):  # Color in HTML notation
-        color = [int(color_parameter[i : i + 2], 16) for i in [0, 2, 4]]
-        return color
-    else:
-        raise LineParseError("%s is not a valid color" % color_parameter)
+def parse_config_color(color_parameter):
+    _color = parse_color(color_parameter)
+    return [int(_color[i : i + 2], 16) for i in [0, 2, 4]]
 
 
 def update_colors_map(colors_map, keycodes, color):

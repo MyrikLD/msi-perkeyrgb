@@ -1,12 +1,18 @@
 import re
 from typing import Tuple
 
+import webcolors
+
 
 class UnknownIdError(Exception):
     pass
 
 
 class UnknownPresetError(Exception):
+    pass
+
+
+class ColorParseError(Exception):
     pass
 
 
@@ -25,3 +31,16 @@ def parse_preset(preset_arg, msi_presets):
         return preset_arg
     else:
         raise UnknownPresetError(preset_arg)
+
+
+def parse_color(color: str) -> str:
+    _color = color.lower()
+    try:
+        _color = webcolors.name_to_hex(_color)[1:]
+    except ValueError:
+        pass
+
+    if re.fullmatch("^[0-9a-f]{6}$", _color):  # Color in HTML notation
+        return _color
+    else:
+        raise ColorParseError(f"{color} is not a valid color")

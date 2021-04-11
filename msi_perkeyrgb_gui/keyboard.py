@@ -6,6 +6,7 @@ from logging import getLogger
 from typing import List, Optional
 
 from .key import Key
+from .parsing import parse_color
 
 log = getLogger(__name__)
 
@@ -86,7 +87,7 @@ class Keyboard:
                 else:
                     parsed_keys.append(self.get_keycode(int(i)))
             for key in parsed_keys:
-                key.color = color
+                key.color = parse_color(color)
 
     def save_colors(self, filename: str):
         lines = []
