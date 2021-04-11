@@ -11,6 +11,7 @@ PRESETS_FILES = [
             "GT63",
             "GL63",
             "GP75",
+            "GL73",
         ],
         "1.json",
     ),

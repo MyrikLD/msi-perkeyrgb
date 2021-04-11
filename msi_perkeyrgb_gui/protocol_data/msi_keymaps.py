@@ -11,6 +11,7 @@ AVAILABLE_MSI_KEYMAPS = [
             "GT63",
             "GL63",
             "GP75",
+            "GL73",
         ],
         {
             9: 41,

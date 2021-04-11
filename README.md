@@ -42,12 +42,13 @@ This tool should probably work on any recent MSI laptop with a per-key RGB keybo
 | GE73  | Yes | No
 | GE75  | Yes | Yes
 | GL63  | Yes | Yes
+| GL73  | Yes | No
+| GP75  | Yes | Yes
 | GS63  | Yes | No
 | GS65  | Yes | Yes
 | GS75  | Yes | Yes
 | GT63  | Yes | No
 | GT75  | Yes | No
-| GP75  | Yes | Yes
 
 If you have some additional test results, feel free to open a GitHub issue to help expand this list !
 
