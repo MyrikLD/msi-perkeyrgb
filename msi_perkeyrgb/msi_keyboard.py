@@ -9,7 +9,6 @@ from .msiprotocol import make_key_colors_packet, make_refresh_packet
 
 
 class MSI_Keyboard:
-
     @staticmethod
     def get_model_keymap(msi_model):
         for msi_models, msi_keymap in AVAILABLE_MSI_KEYMAPS:
@@ -18,28 +17,22 @@ class MSI_Keyboard:
 
     @staticmethod
     def get_model_presets(msi_model):
-
         for msi_models, filename in PRESETS_FILES:
-
             if msi_model in msi_models:
-
-                presets_path = os.path.join(os.path.dirname(__file__),
-                                            'protocol_data',
-                                            'presets',
-                                            filename)
+                presets_path = os.path.join(
+                    os.path.dirname(__file__), "protocol_data", "presets", filename
+                )
                 with open(presets_path) as f:
                     msi_presets = json.load(f)
 
                 return msi_presets
 
     def __init__(self, usb_id, msi_keymap, msi_presets):
-
         self._hid_keyboard = HID_Keyboard(usb_id)
         self._msi_keymap = msi_keymap
         self._msi_presets = msi_presets
 
     def set_color_all(self, color):
-
         for region in REGION_KEYCODES.keys():
 
             keycodes = REGION_KEYCODES[region]

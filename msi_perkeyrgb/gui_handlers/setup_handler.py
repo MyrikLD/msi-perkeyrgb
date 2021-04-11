@@ -1,21 +1,28 @@
 import json
 import logging
+import os
 from json import JSONDecodeError
 
-from key import Key
+from msi_perkeyrgb.key import Key
+from .base import BaseHandler
 
 log = logging.getLogger(__name__)
 
 
-class SetupHandler:
+class SetupHandler(BaseHandler):
     box = [(0, 0), (0, 0)]
 
     def __init__(self, model, image):
-        self.model = model
+        super().__init__(model)
         self.image = image
 
         try:
-            with open(f"bindings/{self.model}.json") as f:
+
+            with open(
+                os.path.join(
+                    os.path.dirname(__file__), "..", "bindings", f"{model}.json"
+                )
+            ) as f:
                 keys = json.load(f)
         except FileNotFoundError:
             log.warning("Config not found")
@@ -24,7 +31,7 @@ class SetupHandler:
             log.error("Config error")
             keys = []
 
-        self.image.set_from_file(f"images/{model}.png")
+        self.image.set_from_file(self.image_path)
 
         self.keys = sorted(
             {Key(**i) for i in keys},
@@ -50,7 +57,7 @@ class SetupHandler:
         print(key)
         self.keys.append(key)
 
-        with open(f"bindings/{self.model}.json", "w") as f:
+        with open(self.bindings_path, "w") as f:
             json.dump(
                 sorted((i.dict() for i in set(self.keys)), key=lambda x: x["keycode"]),
                 f,

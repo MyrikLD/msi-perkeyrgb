@@ -15,7 +15,16 @@ F_KEYCODES = [*range(67, 77), 95, 96]
 NUM_ROW_KEYCODES = [*range(10, 22)]
 CHARACTERS_KEYCODES = [*range(24, 36), *range(38, 49), *range(52, 62), 65]
 BULK_KEYCODES = {
-    "all": [range(9, 134), 666],
+    "all": [
+        *range(9, 92),
+        *range(94, 97),
+        *range(104, 109),
+        *range(111, 115),
+        *range(116, 120),
+        127,
+        133,
+        666,
+    ],
     "numpad": NUMPAD_KEYCODES,
     "arrows": ARROWS_KEYCODES,
     "f_row": F_KEYCODES,
@@ -92,7 +101,7 @@ class Keyboard:
         exclude = set()
 
         for k, v in BULK_KEYCODES.items():
-            bulk = [self.get_keycode(i).color for i in v]
+            bulk = [key.color for key in (self.get_keycode(kc) for kc in v) if key]
             color = eq(bulk)
             if color and color != main_color:
                 lines.append(f"{k} steady {color}")
@@ -112,15 +121,17 @@ class Keyboard:
         with open(filename, "w") as f:
             f.writelines([i + "\n" for i in lines])
 
-    def get_xy(self, x: int, y: int):
-        for key in self.keys:
+    def get_xy(self, x: int, y: int) -> Key:
+        for key in self:
             if key.clicked(x, y):
                 return key
+        log.debug(f"Unknown keycode: (%i,%i)", x, y)
 
-    def get_keycode(self, keycode: int):
-        for i in self.keys:
+    def get_keycode(self, keycode: int) -> Key:
+        for i in self:
             if i.keycode == keycode:
                 return i
+        log.warning(f"Unknown keycode: {keycode}")
 
     def __iter__(self):
         for i in self.keys:

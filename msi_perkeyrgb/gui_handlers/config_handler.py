@@ -2,6 +2,8 @@ import logging
 import sys
 
 from gi.repository import Gdk
+
+from keyboard import Keyboard
 from msi_perkeyrgb.config import load_config, ConfigError
 from msi_perkeyrgb.hidapi_wrapping import (
     HIDNotFoundError,
@@ -10,8 +12,7 @@ from msi_perkeyrgb.hidapi_wrapping import (
 )
 from msi_perkeyrgb.msi_keyboard import MSI_Keyboard
 from msi_perkeyrgb.parsing import parse_usb_id, UnknownIdError
-
-from keyboard import Keyboard
+from .base import BaseHandler
 
 log = logging.getLogger(__name__)
 GDK_CONTROL_MASK = 4
@@ -60,19 +61,20 @@ def update_kb(model, usb_id, config):
     kb.refresh()
 
 
-class ConfigHandler:
+class ConfigHandler(BaseHandler):
     current_key = None
 
     def __init__(self, model, image, color_selector, colors_filename, usb_id):
+        super().__init__(model)
         self.image = image
         self.color_selector = color_selector
         self.colors_filename = colors_filename
-        self.model = model
         self.usb_id = usb_id
 
         self.image.connect("draw", self.expose)
-        self.keyboard = Keyboard.load_keys(f"bindings/{model}.json")
-        self.image.set_from_file(f"images/{model}.png")
+        self.keyboard = Keyboard.load_keys(self.bindings_path)
+
+        self.image.set_from_file(self.image_path)
         self.keyboard.load_colors(self.colors_filename)
 
     def expose(self, area, context):

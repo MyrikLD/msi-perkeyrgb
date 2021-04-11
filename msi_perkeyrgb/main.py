@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
 import argparse
+import os
 import sys
 
 import gi
 
 import gui_handlers
-from .config import load_config, load_steady, ConfigError
+from .config import load_steady, ConfigError
 from .hidapi_wrapping import HIDLibraryError, HIDNotFoundError, HIDOpenError
 from .msi_keyboard import MSI_Keyboard
 from .parsing import (
@@ -27,20 +28,23 @@ DEFAULT_ID = "1038:1122"
 DEFAULT_MODEL = "GE63"  # Default laptop model if nothing specified
 
 
-def run_gui(model, colors_filename, usb_id):
+def run_gui(model, colors_filename, usb_id, setup=False):
     builder = Gtk.Builder()
-    builder.add_from_file("ui.glade")
+
+    builder.add_from_file(os.path.join(os.path.dirname(__file__), "ui.glade"))
     kb_image = builder.get_object("kb_image")
     color_selector = builder.get_object("color_selector")
 
-    # h = SetupHandler(model, kb_image)
-    h = gui_handlers.ConfigHandler(
-        model,
-        kb_image,
-        color_selector,
-        colors_filename,
-        usb_id,
-    )
+    if setup:
+        h = gui_handlers.SetupHandler(model, kb_image)
+    else:
+        h = gui_handlers.ConfigHandler(
+            model,
+            kb_image,
+            color_selector,
+            colors_filename,
+            usb_id,
+        )
     builder.connect_signals(h)
 
     window = builder.get_object("GtkWindow")
@@ -161,7 +165,7 @@ def main():
             except HIDLibraryError as e:
                 print(
                     "Cannot open HIDAPI library : %s. "
-                    'Make sure you have installed libhidapi on your system, '
+                    "Make sure you have installed libhidapi on your system, "
                     'then try running "sudo ldconfig" to regenerate library cache.'
                     % str(e)
                 )
@@ -170,7 +174,7 @@ def main():
                 if not args.id:
                     print(
                         "No MSI keyboards with a known product/vendor IDs were found. "
-                        'However, if you think your keyboard should work with this program, '
+                        "However, if you think your keyboard should work with this program, "
                         'you can try overriding the ID by adding the option "--id VENDOR_ID:PRODUCT_ID". '
                         "In that case you will also need to give yourself proper read/write permissions "
                         "to the corresponding /dev/hidraw* device."
@@ -209,18 +213,18 @@ def main():
                 kb.refresh()
 
             # If user has requested to load a config file
-            elif args.config:
-                try:
-                    colors_map, warnings = load_config(args.config, msi_keymap)
-                except ConfigError as e:
-                    print("Error reading config file : %s" % str(e))
-                    sys.exit(1)
-
-                for w in warnings:
-                    print("Warning :", w)
-
-                kb.set_colors(colors_map)
-                kb.refresh()
+            # elif args.config:
+            #     try:
+            #         colors_map, warnings = load_config(args.config, msi_keymap)
+            #     except ConfigError as e:
+            #         print("Error reading config file: %s" % str(e))
+            #         sys.exit(1)
+            #
+            #     for w in warnings:
+            #         print("Warning :", w)
+            #
+            #     kb.set_colors(colors_map)
+            #     kb.refresh()
 
             # If user has requested to display a steady color
             elif args.steady:

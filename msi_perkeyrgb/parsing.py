@@ -1,4 +1,6 @@
 import re
+from typing import Tuple
+
 from .protocol_data.msi_keymaps import AVAILABLE_MSI_KEYMAPS
 
 
@@ -25,10 +27,11 @@ def parse_model(model_arg):
     raise UnknownModelError(model_arg)
 
 
-def parse_usb_id(id_arg):
-
+def parse_usb_id(id_arg) -> Tuple[int, int]:
+    if isinstance(id_arg, (tuple, list)):
+        return tuple(id_arg)
     if re.fullmatch("^[0-9a-f]{4}:[0-9a-f]{4}$", id_arg):
-        vid, pid = [int(s, 16) for s in id_arg.split(':')]
+        vid, pid = [int(s, 16) for s in id_arg.split(":")]
         return (vid, pid)
     else:
         raise UnknownIdError(id_arg)
