@@ -16,7 +16,7 @@ class Key(BaseModel):
     color: str = "000000"
 
     def __str__(self):
-        return self.json()
+        return self.json(exclude_defaults=True)
 
     __repr__ = __str__
 
