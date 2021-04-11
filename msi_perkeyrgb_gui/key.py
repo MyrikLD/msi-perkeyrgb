@@ -1,11 +1,8 @@
 from typing import Tuple
 
-import gi
 from pydantic import BaseModel, validator
 
 from .parsing import parse_color
-
-gi.require_version("Gtk", "3.0")
 
 
 class Key(BaseModel):

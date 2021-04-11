@@ -4,11 +4,12 @@ import sys
 
 from gi.repository import Gdk
 
-from ..keyboard import Keyboard
+from .base import BaseHandler
+from .open_file_dialog import OpenFileDialog
 from ..config import load_config, ConfigError
+from ..keyboard import Keyboard
 from ..msikeyboard import MSIKeyboard
 from ..parsing import parse_usb_id, UnknownIdError
-from .base import BaseHandler
 
 log = logging.getLogger(__name__)
 GDK_CONTROL_MASK = 4
@@ -93,14 +94,27 @@ class ConfigHandler(BaseHandler):
         flag = button.state
         shift = bool(int(flag) & GDK_CONTROL_MASK)
         if shift:
-            if keycode == 39:
+            key = self.keyboard.get_keycode(keycode)
+            if keycode == 39 or key.name == "s":
                 log.info(f"Save colors to: {self.colors_filename}")
                 self.keyboard.save_colors(self.colors_filename)
                 update_kb(self.model, self.usb_id, self.colors_filename)
-            if keycode == 52:
+            elif keycode == 52 or key.name == "x":
                 log.info(f"Load colors from: {self.colors_filename}")
                 self.keyboard.load_colors(self.colors_filename)
                 self.image.queue_draw()
+            elif keycode == 32 or key.name == "o":
+                self.colors_filename = OpenFileDialog.open(
+                    self.color_selector.get_parent()
+                )
+
+                self.keyboard.load_colors(self.colors_filename)
+                self.image.queue_draw()
+                log.info(f"Config file opened: {self.colors_filename}")
+            else:
+                key = self.keyboard.get_keycode(keycode)
+                if key:
+                    log.info(f"Unknown combination: shift+{keycode}")
         # else:
         #     key = self.keyboard.get_keycode(keycode)
         #     log.info("Press: %s", key.name if key else keycode)

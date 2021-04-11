@@ -7,6 +7,9 @@ import sys
 
 import gi
 
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+
 from .config import load_steady, ConfigError
 from .gui_handlers import SetupHandler, ConfigHandler
 from .msikeyboard import MSIKeyboard, UnknownModelError
@@ -17,7 +20,6 @@ from .parsing import (
     UnknownPresetError,
 )
 
-gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
 __version__ = "3.0"
@@ -49,8 +51,8 @@ def run_gui(model, colors_filename, usb_id, setup=False):
     builder.connect_signals(h)
 
     window = builder.get_object("GtkWindow")
-    window.show_all()
     window.set_title(f"{model} Keyboard {__version__}")
+    window.show_all()
 
     Gtk.main()
 
