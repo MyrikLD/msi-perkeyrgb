@@ -5,9 +5,9 @@ import sys
 from gi.repository import Gdk
 
 from keyboard import Keyboard
-from msi_perkeyrgb.config import load_config, ConfigError
-from msi_perkeyrgb.msikeyboard import MSIKeyboard
-from msi_perkeyrgb.parsing import parse_usb_id, UnknownIdError
+from msi_perkeyrgb_gui.config import load_config, ConfigError
+from msi_perkeyrgb_gui.msikeyboard import MSIKeyboard
+from msi_perkeyrgb_gui.parsing import parse_usb_id, UnknownIdError
 from .base import BaseHandler
 
 log = logging.getLogger(__name__)

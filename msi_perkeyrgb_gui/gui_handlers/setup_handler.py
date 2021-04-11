@@ -3,7 +3,7 @@ import logging
 import os
 from json import JSONDecodeError
 
-from msi_perkeyrgb.key import Key
+from msi_perkeyrgb_gui.key import Key
 from .base import BaseHandler
 
 log = logging.getLogger(__name__)
