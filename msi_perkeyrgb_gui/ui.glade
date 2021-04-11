@@ -55,6 +55,7 @@
                         <property name="use-underline">True</property>
                         <property name="image">image1</property>
                         <property name="use-stock">False</property>
+                        <signal name="activate" handler="config_save_as" swapped="no"/>
                       </object>
                     </child>
                     <child>
